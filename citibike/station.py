@@ -9,9 +9,9 @@ from functools import reduce
 from glob import glob
 from glob import glob
 from itertools import chain
-from json import dumps, load 
+from json import load, dump, dumps
 from os import environ
-from os.path import join, exists, basename
+from os.path import basename, exists, join
 from sys import argv, stderr
 
 
