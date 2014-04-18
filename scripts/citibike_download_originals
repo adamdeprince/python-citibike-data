@@ -1,0 +1,7 @@
+#!/usr/bin/python
+
+from citibike.download import main
+from sys import exit, argv
+
+if __name__ == "__main__":
+    exit(main(argv))
