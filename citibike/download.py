@@ -6,7 +6,7 @@ from a zip to a bz2 file."""
 from pipes import quote
 from tempfile import TemporaryFile
 from distutils.dir_util import mkpath
-from os import environ,  makedirs, unlink
+from os import environ, makedirs, unlink
 from os.path import join, exists
 import errno
 import requests
@@ -20,11 +20,24 @@ FLAGS = gflags.FLAGS
 
 gflags.DEFINE_integer('year', 2013, 'Year of first file to download')
 gflags.DEFINE_integer('month', 7, 'Month of first file to download')
-gflags.DEFINE_string('filename', '%(year)04d%(month)02d-citibike-tripdata.zip', 'Template for building citibike filename/url')
-gflags.DEFINE_string('url', 'https://s3.amazonaws.com/tripdata/%(filename)s', 'URL template from which to download')
-gflags.DEFINE_string('csv', '%(year)04d-%(month)02d - Citi Bike trip data.csv', 'Name of CSV file in zip file')
-gflags.DEFINE_string('compressed_csv', '%(year)04d-%(month)02d - Citi Bike trip data.csv.bz2', 'Name of bz2 compressed CSV file')
-gflags.DEFINE_string('chunk_size', 2**20, 'Download chunk size')
+gflags.DEFINE_string(
+    'filename',
+    '%(year)04d%(month)02d-citibike-tripdata.zip',
+    'Template for building citibike filename/url')
+gflags.DEFINE_string(
+    'url',
+    'https://s3.amazonaws.com/tripdata/%(filename)s',
+    'URL template from which to download')
+gflags.DEFINE_string(
+    'csv',
+    '%(year)04d-%(month)02d - Citi Bike trip data.csv',
+    'Name of CSV file in zip file')
+gflags.DEFINE_string(
+    'compressed_csv',
+    '%(year)04d-%(month)02d - Citi Bike trip data.csv.bz2',
+    'Name of bz2 compressed CSV file')
+gflags.DEFINE_string('chunk_size', 2 ** 20, 'Download chunk size')
+
 
 def month_counter(year=None, month=None):
     year = year or FLAGS.year
@@ -34,7 +47,8 @@ def month_counter(year=None, month=None):
             yield year, month
             month += 1
         month = 1
-        year += 1 
+        year += 1
+
 
 def path_csv_and_urls(year=None, month=None, filename=None, url=None):
     for year, month in month_counter(year, month):
@@ -43,6 +57,7 @@ def path_csv_and_urls(year=None, month=None, filename=None, url=None):
         path = join(FLAGS.cache, FLAGS.compressed_csv % vars())
         csv = FLAGS.csv % vars()
         yield path, csv, url
+
 
 def download(target=None):
 
@@ -70,7 +85,8 @@ def download(target=None):
             tf.seek(0)
             pb.finish()
             print("Recompressing to: " + quote(path))
-            size = (i.file_size for i in ZipFile(tf).infolist() if i.filename==csv).next()
+            size = (
+                i.file_size for i in ZipFile(tf).infolist() if i.filename == csv).next()
             l = 0
             try:
                 with ZipFile(tf).open(csv) as csv_file:
@@ -93,10 +109,9 @@ def download(target=None):
 def main(argv):
     try:
         argv = FLAGS(argv)[1:]
-    except (gflags.FlagsError, KeyError, IndexError), e:
+    except (gflags.FlagsError, KeyError, IndexError) as e:
         sys.stderr.write("%s\nUsage: %s \n%s\n" % (
-                e, os.path.basename(sys.argv[0]), FLAGS))
+            e, os.path.basename(sys.argv[0]), FLAGS))
         return 1
-    
 
     download()
