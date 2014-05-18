@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from datetime import date
 from csv import DictReader
 from bz2file import BZ2File
 from glob import glob
@@ -9,15 +10,17 @@ from functional import compose, partial
 from functools import reduce
 import gflags
 from glob import glob
-from os.path import join
+from os.path import join, basename
 from os import environ
 from citibike import cache
-
+import sys
+import os
 FLAGS = gflags.FLAGS
 
 
 gflags.DEFINE_string('glob', '*.csv.bz2', 'Glob pattern to read from cache')
-
+gflags.DEFINE_string('start', None, 'Start date formatted as year/month/day')
+gflags.DEFINE_string('end', None, 'End date (inclusive) formatted as year/month/day')
 gflags.DEFINE_multistring('filter', [], 'Add filters')
 gflags.DEFINE_multistring('exclude', [], 'Add exclusions')
 gflags.DEFINE_boolean(
@@ -35,6 +38,30 @@ STATION_DETAILS = set(
      'end station name',
      'start station name'))
 
+def parse_date(d):
+    if d is None:
+        return None
+    y, m, d = map(int, d.split('-'))
+    return date(y, m, d)
+
+def validate_date(d):
+    try:
+        parse_date(d)
+        return True
+    except:
+        return False
+
+
+gflags.RegisterValidator('start',
+                        validate_date,
+                        message='Incorrect date format',
+                        flag_values=FLAGS)
+
+gflags.RegisterValidator('end',
+                        validate_date,
+                        message='Incorrect date format',
+                        flag_values=FLAGS)
+
 
 def remove_station_details(record):
     """Removes station details from a record"""
@@ -46,8 +73,62 @@ def remove_station_details(record):
     return retval
 
 
+class DateChecker():
+    last_str = None
+    last_date = None
+    def __init__(self, start, stop):
+        self.start, self.stop = map(parse_date, (start, stop))
+
+        if None not in (self.start, self.stop):
+            self.start, self.stop = sorted((self.start, self.stop))
+
+        self.start_file = (self.start.year, self.start.month) if self.start else None
+        self.stop_file = (self.stop.year, self.stop.month) if self.stop else None
+        
+    @staticmethod
+    def parse_filename(fn):
+        fn = basename(fn)
+        fn = fn.split()[0].split('-')
+        return tuple(map(int, fn))
+
+    @classmethod
+    def parse_date_from_timestamp(cls, d):
+        d = d.split()[0]
+        if cls.last_str == d.split()[0]:
+            return cls.last_date
+        cls.last_str = d
+        d = date(*map(int, d.split('-')))
+        cls.last_date = d
+        return d
+
+    def valid_row(self, row):
+        date = self.parse_date_from_timestamp(row['starttime'])
+        if self.stop and date > self.stop:
+            raise StopIteration
+        return self.start is None or date >= self.start
+        
+
+    def valid_file(self, fn):
+        fn = self.parse_filename(fn)
+        year, month = fn
+        if self.stop_file is not None:
+            if (year,month) > self.stop_file:
+                return False
+        if self.start_file is not None:
+            if (year, month) < self.stop_file:
+                return False
+        return True
+
+
+
+
 def rides(files=[]):
     def float(obj, _cache={}, float=__builtins__['float']):
+
+        date_checker = DateChecker(FLAGS.start, FLAGS.end)
+        start, end = map(parse_date, (FLAGS.start, FLAGS.end))
+        if None not in (start,end):
+            start,end = sorted((start, end))
 
         # Its important we have a memoized version of float to be
         # absolutely sure two strings with the same source compare
@@ -67,15 +148,17 @@ def rides(files=[]):
         _cache[obj] = f
         return f
 
+    date_checker = DateChecker(FLAGS.start, FLAGS.end)
     files = files or sorted(glob(join(FLAGS.cache, '*.csv.bz2')))
+    files = filter(date_checker.valid_file, files)
     if not files:
         return
     for ride in chain(*(DictReader(BZ2File(f)) for f in files)):
+        if not date_checker.valid_row(ride): continue 
         ride['start station id'] = int(ride['start station id'])
         ride['end station id'] = int(ride['end station id'])
         ride['start station latitude'] = float(ride['start station latitude'])
-        ride['start station longitude'] = float(
-            ride['start station longitude'])
+        ride['start station longitude'] = float(ride['start station longitude'])
         ride['end station latitude'] = float(ride['end station latitude'])
         ride['end station longitude'] = float(ride['end station longitude'])
         yield ride
@@ -148,4 +231,10 @@ def main(argv):
         sys.stderr.write("%s\nUsage: %s \n%s\n" % (
             e, os.path.basename(sys.argv[0]), FLAGS))
         return 1
-    run()
+    try:
+        run()
+    except IOError:
+        return 0
+    finally:
+        sys.stderr.close()
+        sys.stdout.close()
