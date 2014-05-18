@@ -8,7 +8,7 @@ from setuptools import setup
 
 setup(
     name='citibike',
-    version='0.0.0',
+    version='0.0.2',
     author='Adam DePrince',
     author_email='deprince@googlealumni.com',
     description='',
@@ -36,7 +36,6 @@ setup(
     url='https://github.com/adamdeprince/python-citibike-data',
     install_requires=[
         'bz2file',
-        'boto',
         'functional',
         'python-gflags',
         'requests',
