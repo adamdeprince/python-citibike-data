@@ -8,7 +8,7 @@ from setuptools import setup
 
 setup(
     name='citibike',
-    version='0.0.2',
+    version='0.0.3',
     author='Adam DePrince',
     author_email='deprince@googlealumni.com',
     description='',
