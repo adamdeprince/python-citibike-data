@@ -35,7 +35,7 @@ citibike_stations > /dev/null
 CHANGES
 =======
 
-0.0.4 - Lines are proper json
+0.0.4 - citibike_dump generates proper json; add citibike_station_mapper command
 
 0.0.3 - stationid, tripduration, bikeid, gender and birth year are
 treated as integers instead of strings.
