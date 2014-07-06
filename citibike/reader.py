@@ -13,6 +13,7 @@ from glob import glob
 from os.path import join, basename
 from os import environ
 from citibike import cache
+from json import dumps
 import sys
 import os
 FLAGS = gflags.FLAGS
@@ -183,7 +184,7 @@ def run():
         if not FLAGS.details:
             ride = ride(remove_station_details(ride))
         try:
-            print(ride)
+            print(dumps(ride))
         except IOError:
             break
 
