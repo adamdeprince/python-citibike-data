@@ -11,7 +11,7 @@ setup(
     version='0.0.2',
     author='Adam DePrince',
     author_email='deprince@googlealumni.com',
-    description='',
+    description='Easiest way for python programmers to download and work with NYC\'s public citibike dataset',
     long_description=__doc__,
     py_modules=[
         'citibike/__init__',
@@ -40,5 +40,5 @@ setup(
         'python-gflags',
         'requests',
         'progressbar',
-    ]
+    ],
 )

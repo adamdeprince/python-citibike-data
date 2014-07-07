@@ -20,7 +20,8 @@ FLAGS = gflags.FLAGS
 
 gflags.DEFINE_string('glob', '*.csv.bz2', 'Glob pattern to read from cache')
 gflags.DEFINE_string('start', None, 'Start date formatted as year/month/day')
-gflags.DEFINE_string('end', None, 'End date (inclusive) formatted as year/month/day')
+gflags.DEFINE_string('end', None,
+                     'End date (inclusive) formatted as year/month/day')
 gflags.DEFINE_multistring('filter', [], 'Add filters')
 gflags.DEFINE_multistring('exclude', [], 'Add exclusions')
 gflags.DEFINE_boolean(
@@ -38,11 +39,13 @@ STATION_DETAILS = set(
      'end station name',
      'start station name'))
 
+
 def parse_date(d):
     if d is None:
         return None
     y, m, d = map(int, d.split('-'))
     return date(y, m, d)
+
 
 def validate_date(d):
     try:
@@ -53,14 +56,14 @@ def validate_date(d):
 
 
 gflags.RegisterValidator('start',
-                        validate_date,
-                        message='Incorrect date format',
-                        flag_values=FLAGS)
+                         validate_date,
+                         message='Incorrect date format',
+                         flag_values=FLAGS)
 
 gflags.RegisterValidator('end',
-                        validate_date,
-                        message='Incorrect date format',
-                        flag_values=FLAGS)
+                         validate_date,
+                         message='Incorrect date format',
+                         flag_values=FLAGS)
 
 
 def remove_station_details(record):
@@ -76,6 +79,7 @@ def remove_station_details(record):
 class DateChecker():
     last_str = None
     last_date = None
+
     def __init__(self, start, stop):
         self.start, self.stop = map(parse_date, (start, stop))
 
@@ -84,7 +88,7 @@ class DateChecker():
 
         self.start_file = (self.start.year, self.start.month) if self.start else None
         self.stop_file = (self.stop.year, self.stop.month) if self.stop else None
-        
+
     @staticmethod
     def parse_filename(fn):
         fn = basename(fn)
@@ -106,13 +110,12 @@ class DateChecker():
         if self.stop and date > self.stop:
             raise StopIteration
         return self.start is None or date >= self.start
-        
 
     def valid_file(self, fn):
         fn = self.parse_filename(fn)
         year, month = fn
         if self.stop_file is not None:
-            if (year,month) > self.stop_file:
+            if (year, month) > self.stop_file:
                 return False
         if self.start_file is not None:
             if (year, month) < self.stop_file:
@@ -120,15 +123,13 @@ class DateChecker():
         return True
 
 
-
-
 def rides(files=[]):
     def float(obj, _cache={}, float=__builtins__['float']):
 
         date_checker = DateChecker(FLAGS.start, FLAGS.end)
         start, end = map(parse_date, (FLAGS.start, FLAGS.end))
-        if None not in (start,end):
-            start,end = sorted((start, end))
+        if None not in (start, end):
+            start, end = sorted((start, end))
 
         # Its important we have a memoized version of float to be
         # absolutely sure two strings with the same source compare
@@ -154,11 +155,12 @@ def rides(files=[]):
     if not files:
         return
     for ride in chain(*(DictReader(BZ2File(f)) for f in files)):
-        if not date_checker.valid_row(ride): continue 
+        if not date_checker.valid_row(ride): continue
         ride['start station id'] = int(ride['start station id'])
         ride['end station id'] = int(ride['end station id'])
         ride['start station latitude'] = float(ride['start station latitude'])
-        ride['start station longitude'] = float(ride['start station longitude'])
+        ride['start station longitude'] = float(
+            ride['start station longitude'])
         ride['end station latitude'] = float(ride['end station latitude'])
         ride['end station longitude'] = float(ride['end station longitude'])
         yield ride
