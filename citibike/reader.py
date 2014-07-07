@@ -13,6 +13,7 @@ from glob import glob
 from os.path import join, basename
 from os import environ
 from citibike import cache
+from json import dumps
 import sys
 import os
 FLAGS = gflags.FLAGS
@@ -38,6 +39,13 @@ STATION_DETAILS = set(
      'end station latitude',
      'end station name',
      'start station name'))
+
+
+def int_or_none(value):
+    try:
+        return int(value)
+    except:
+        return None
 
 
 def parse_date(d):
@@ -122,7 +130,6 @@ class DateChecker():
                 return False
         return True
 
-
 def rides(files=[]):
     def float(obj, _cache={}, float=__builtins__['float']):
 
@@ -156,11 +163,14 @@ def rides(files=[]):
         return
     for ride in chain(*(DictReader(BZ2File(f)) for f in files)):
         if not date_checker.valid_row(ride): continue
-        ride['start station id'] = int(ride['start station id'])
-        ride['end station id'] = int(ride['end station id'])
+        ride['start station id'] = int_or_none(ride['start station id'])
+        ride['end station id'] = int_or_none(ride['end station id'])
+        ride['tripduration'] = int_or_none(ride['tripduration'])
+        ride['bikeid'] = int_or_none(ride['bikeid'])
+        ride['gender'] = int_or_none(ride['gender'])
+        ride['birth year'] = int_or_none(ride['birth year'])
         ride['start station latitude'] = float(ride['start station latitude'])
-        ride['start station longitude'] = float(
-            ride['start station longitude'])
+        ride['start station longitude'] = float(ride['start station longitude'])
         ride['end station latitude'] = float(ride['end station latitude'])
         ride['end station longitude'] = float(ride['end station longitude'])
         yield ride
@@ -175,7 +185,7 @@ def run():
         if not FLAGS.details:
             ride = ride(remove_station_details(ride))
         try:
-            print(ride)
+            print(dumps(ride))
         except IOError:
             break
 

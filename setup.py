@@ -5,10 +5,9 @@ py-citibike
 
 from setuptools import setup
 
-
 setup(
     name='citibike',
-    version='0.0.2',
+    version='0.0.4',
     author='Adam DePrince',
     author_email='deprince@googlealumni.com',
     description='Easiest way for python programmers to download and work with NYC\'s public citibike dataset',
@@ -17,7 +16,8 @@ setup(
         'citibike/__init__',
         'citibike/reader',
         'citibike/download',
-        'citibike/station',
+        'citibike/station/__init__',
+        'citibike/station/mapper',
     ],
     packages=['citibike'],
     zip_safe=True,
@@ -32,11 +32,13 @@ setup(
         # Downloads and unpacks original citibike data
         'scripts/citibike_stations',
         # Dumps station data and manages station data cache
+        'scripts/citibike_station_mapper'
     ],
     url='https://github.com/adamdeprince/python-citibike-data',
     install_requires=[
         'bz2file',
         'functional',
+        'geojson',
         'python-gflags',
         'requests',
         'progressbar',
